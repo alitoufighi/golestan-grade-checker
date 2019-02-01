@@ -8,10 +8,16 @@ You need to first create a `.env` file aside cloned files and enter username and
 USERNAME=<your username>
 PASSWORD=<your password>
 ```
-If you want Telegram notifications, you can add `TOKEN` and `CHAT_ID` pairs which are the token of your bot and the chat id (the numerical id) of your Telegram account, respectively.
+If you want Telegram notifications, you can add `TOKEN` and `CHAT_ID` pairs which are the token of your bot and the chat id (the numerical id) of your Telegram account, respectively. Also you must turn the `TELE_NOTIF` to `True`. (You may want to check [Telegram bots page](https://core.telegram.org/bots) if you're not familiar with them)
+
+Then identify which term is the term you are looking for grades coming. You can do it by changing value of `TERM_NO`.
+
+Please note that if you want to use Firefox as the browser (which is as default), you must also have [geckodriver](https://github.com/mozilla/geckodriver/releases) to work with.
+
+Finally, you can run the `main.py` file using `./main.py` or `python3 main.py`.
 
 ### Requirements:
-* python3+
+* python3.4+
 * selenium (For Python)  `pip3 install selenium`
 * dotenv (For Python) `pip3 install python-dotenv`
 * terminal-notifier (For OSx) `brew install terminal-notifier`
