@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import platform
 from dotenv import load_dotenv
 from pathlib import Path
 from time import sleep
@@ -10,14 +11,30 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+from telegram.ext import Updater
 
 TERM_NO = 5  # Which term are you in?
+TELEGRAM_NOTIF = True
 
 # University of Tehran CAS Url (Change to yours, if you are not a UT student)
 UTCAS_URL = "https://auth4.ut.ac.ir:8443/cas/login?service=https://ems1.ut.ac.ir/forms/casauthenticateuser/\
 casmu.aspx?ut=1%26CSURL=https://auth4.ut.ac.ir:8443/cas/logout?service$https://ems.ut.ac.ir/"
 
-s.call(['notify-send', 'Golestan Grade Checker is running', 'By Ali_Tou'])
+OS = 'OSx' if platform.system() == 'Darwin' else 'Linux'
+
+def mac_notify(title, subtitle, message , sound_on):
+    title = '-title {!r}'.format(title)
+    sub = '-subtitle {!r}'.format(subtitle)
+    msg = '-message {!r}'.format(message)
+    sound = '-sound default' if sound_on else ''
+    os.system('terminal-notifier {}'.format(' '.join([msg, title, sub, sound])))
+
+
+if(OS is 'OSx'):
+    mac_notify("Golestan", 'By Ali_Tou', 'Golestan Grade Checker is running', sound_on = False)
+else:
+    s.call(['notify-send', 'Golestan Grade Checker is running', 'By Ali_Tou'])
+
 
 # dotenv is used to handle username and password security.
 load_dotenv(verbose=True)
@@ -26,6 +43,8 @@ load_dotenv(dotenv_path=str(env_path))
 
 USERNAME = os.getenv("USERNAME")
 PASSWORD = os.getenv("PASSWORD")
+TOKEN = os.getenv("TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
 # setup Firefox profile (you can use other browsers, but I prefer Firefox)
 fp = webdriver.FirefoxProfile()
@@ -34,6 +53,9 @@ fp.set_preference("browser.tabs.remote.autostart.1", False)
 fp.set_preference("browser.tabs.remote.autostart.2", False)
 
 driver = webdriver.Firefox(fp)
+updater = None
+if TELEGRAM_NOTIF:
+    updater = Updater(TOKEN)
 
 
 def switch_to_grades_frame(faci_id):
@@ -167,13 +189,21 @@ while True:
         print(diff)
         print('---------')
 
-        # Play a beep sound (using sox)
-        s.call(['play', '--no-show-progress', '--null', '-t', 'alsa', '--channels', '1', 'synth', '1', 'sine', '330'])
+        if(OS is 'Osx'):
+            mac_notify("Golestan", 'Golestan Grade Checker', 'You have new grades in golestan!', sound_on = True)
+        else:
+            # Play a beep sound (using sox)
+            s.call(['play', '--no-show-progress', '--null', '-t', 'alsa', '--channels', '1', 'synth', '1', 'sine', '330'])
 
-        # Send a desktop notification (using notify-send)
-        s.call(['notify-send', 'Golestan Grade Checker', 'You have new grades in golestan!'])
+            # Send a desktop notification (using notify-send)
+            s.call(['notify-send', 'Golestan Grade Checker', 'You have new grades in golestan!'])
 
     previous_grades = given_grades
+    print(f"Given Grades are {given_grades}")
+    if TELEGRAM_NOTIF: 
+        updater.bot.send_message(chat_id = CHAT_ID,
+                                 text = str(f"Given Grades are {given_grades}"))
+
     print(f"Number of given Grades: {given_grades}")
 
     # give professors some time to insert our grades -__-
