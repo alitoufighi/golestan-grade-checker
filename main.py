@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import platform
 from dotenv import load_dotenv
 from pathlib import Path
 from time import sleep
@@ -17,7 +18,21 @@ TERM_NO = 5  # Which term are you in?
 UTCAS_URL = "https://auth4.ut.ac.ir:8443/cas/login?service=https://ems1.ut.ac.ir/forms/casauthenticateuser/\
 casmu.aspx?ut=1%26CSURL=https://auth4.ut.ac.ir:8443/cas/logout?service$https://ems.ut.ac.ir/"
 
-s.call(['notify-send', 'Golestan Grade Checker is running', 'By Ali_Tou'])
+OS = 'OSx' if platform.system() == 'Darwin' else 'Linux'
+
+def mac_notify(title, subtitle, message , sound_on):
+    title = '-title {!r}'.format(title)
+    sub = '-subtitle {!r}'.format(subtitle)
+    msg = '-message {!r}'.format(message)
+    sound = '-sound default' if sound_on else ''
+    os.system('terminal-notifier {}'.format(' '.join([msg, title, sub, sound])))
+
+
+if(OS is 'OSx'):
+    mac_notify("Golestan", 'By Ali_Tou', 'Golestan Grade Checker is running', sound_on = False)
+else:
+    s.call(['notify-send', 'Golestan Grade Checker is running', 'By Ali_Tou'])
+
 
 # dotenv is used to handle username and password security.
 load_dotenv(verbose=True)
@@ -149,11 +164,14 @@ while True:
         # Print on console
         print('You have new grades!')
 
-        # Play a beep sound (using sox)
-        s.call(['play', '--no-show-progress', '--null', '-t', 'alsa', '--channels', '1', 'synth', '1', 'sine', '330'])
+        if(OS is 'Osx'):
+            mac_notify("Golestan", 'Golestan Grade Checker', 'You have new grades in golestan!', sound_on = True)
+        else:
+            # Play a beep sound (using sox)
+            s.call(['play', '--no-show-progress', '--null', '-t', 'alsa', '--channels', '1', 'synth', '1', 'sine', '330'])
 
-        # Send a desktop notification (using notify-send)
-        s.call(['notify-send', 'Golestan Grade Checker', 'You have new grades in golestan!'])
+            # Send a desktop notification (using notify-send)
+            s.call(['notify-send', 'Golestan Grade Checker', 'You have new grades in golestan!'])
 
     previous_grades = given_grades
     print(f"Number of given Grades: {given_grades}")
