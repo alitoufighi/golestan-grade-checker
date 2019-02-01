@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 from telegram.ext import Updater
 
 TERM_NO = 5  # Which term are you in?
+TELEGRAM_NOTIF = True
 
 # University of Tehran CAS Url (Change to yours, if you aren't UT student)
 UTCAS_URL = "https://auth4.ut.ac.ir:8443/cas/login?service=https://ems1.ut.ac.ir/forms/casauthenticateuser/\
@@ -34,7 +35,9 @@ fp.set_preference("browser.tabs.remote.autostart.1", False)
 fp.set_preference("browser.tabs.remote.autostart.2", False)
 
 driver = webdriver.Firefox(fp)
-updater = Updater(TOKEN)
+updater = None
+if TELEGRAM_NOTIF:
+    updater = Updater(TOKEN)
 
 
 def switch_to_grades_frame(Faci_id):
@@ -112,8 +115,9 @@ while True:
         s.call(['notify-send', 'Golestan Grade Checker', 'You have new grades in golestan!'])
     previous_grades = given_grades
     print(f"Given Grades are {given_grades}")
-    updater.bot.send_message(chat_id = CHAT_ID,
-                             text = str(f"Given Grades are {given_grades}"))
+    if TELEGRAM_NOTIF: 
+        updater.bot.send_message(chat_id = CHAT_ID,
+                                 text = str(f"Given Grades are {given_grades}"))
 
 
     # give professors some time to enter our grades -__-
