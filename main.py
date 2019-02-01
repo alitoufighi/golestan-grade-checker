@@ -195,8 +195,7 @@ while True:
             s.call(['notify-send', 'Golestan Grade Checker', 'You have new grades in golestan!'])
 
     previous_grades = given_grades
-    print(f"Given Grades are {given_grades}")
-    if TELEGRAM_NOTIF: 
+    if TELEGRAM_NOTIF:
         updater.bot.send_message(chat_id=CHAT_ID,
                                  text=f"Given Grades are {given_grades}")
 
