@@ -2,27 +2,29 @@
 
 import os
 import platform
-from dotenv import load_dotenv
-from pathlib import Path
-from time import sleep
-from selenium import webdriver
 import subprocess as s
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
+from time import sleep
+from pathlib import Path
+from dotenv import load_dotenv
+from selenium import webdriver
 from selenium.webdriver.common.by import By
-from telegram.ext import Updater
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
 
+OS = 'OSx' if platform.system() == 'Darwin' else 'Linux'
 TERM_NO = 5  # Which term are you in?
-TELEGRAM_NOTIF = True
+TELEGRAM_NOTIF = False
+
+if TELEGRAM_NOTIF:
+    from telegram.ext import Updater
 
 # University of Tehran CAS Url (Change to yours, if you are not a UT student)
 UTCAS_URL = "https://auth4.ut.ac.ir:8443/cas/login?service=https://ems1.ut.ac.ir/forms/casauthenticateuser/\
 casmu.aspx?ut=1%26CSURL=https://auth4.ut.ac.ir:8443/cas/logout?service$https://ems.ut.ac.ir/"
 
-OS = 'OSx' if platform.system() == 'Darwin' else 'Linux'
 
-def mac_notify(title, subtitle, message , sound_on):
+def mac_notify(title, subtitle, message, sound_on):
     title = '-title {!r}'.format(title)
     sub = '-subtitle {!r}'.format(subtitle)
     msg = '-message {!r}'.format(message)
@@ -30,14 +32,14 @@ def mac_notify(title, subtitle, message , sound_on):
     os.system('terminal-notifier {}'.format(' '.join([msg, title, sub, sound])))
 
 
-if(OS is 'OSx'):
-    mac_notify("Golestan", 'By Ali_Tou', 'Golestan Grade Checker is running', sound_on = False)
+if OS is 'OSx':
+    mac_notify("Golestan", 'By Ali_Tou', 'Golestan Grade Checker is running', sound_on=False)
 else:
     s.call(['notify-send', 'Golestan Grade Checker is running', 'By Ali_Tou'])
 
 
 # dotenv is used to handle username and password security.
-load_dotenv(verbose=True)
+load_dotenv(verbose=False)
 env_path = Path('./env') / '.env'
 load_dotenv(dotenv_path=str(env_path))
 
@@ -61,6 +63,7 @@ if TELEGRAM_NOTIF:
 def switch_to_grades_frame(faci_id):
     """
     Golestan uses frames. To access main body of page, we need to switch between its frames
+    This function switches driver to main frame of grades in Etelaate Jame-e Daneshjoo.
     :param faci_id: Golestan frames has a Faci_id which is the id of that frame.
             According to our usage, we need to navigate to different Faci_ids.
     """
@@ -71,6 +74,12 @@ def switch_to_grades_frame(faci_id):
 
 
 def switch_to_main_frame(faci_id):
+    """
+    Golestan uses frames. To access main body of page, we need to switch between its frames
+    This function switches driver to main frame of page (the contents)
+    :param faci_id: Golestan frames has a Faci_id which is the id of that frame.
+            According to our usage, we need to navigate to different Faci_ids.
+    """
     WebDriverWait(driver, 50)\
         .until(ec.frame_to_be_available_and_switch_to_it((By.XPATH, f"""//*[@id="Faci{faci_id}"]""")))
     frame = driver.find_element_by_xpath('/html/frameset/frameset/frame[2]')
@@ -121,6 +130,10 @@ def go_to_semester(term_no):
 
 
 def find_given_grades():
+    """
+    When driver is in the page of a semester, this function finds number of courses which has grades
+    :return: number of courses with given grades
+    """
     result = 0
     grades_table = driver.find_element_by_xpath(""".//table[@id="T02"]""")
     grades_table = grades_table.find_element_by_xpath(""".//tbody""")
@@ -171,11 +184,12 @@ while True:
         # Print on console
         print('You have new grades!')
 
-        if(OS is 'Osx'):
-            mac_notify("Golestan", 'Golestan Grade Checker', 'You have new grades in golestan!', sound_on = True)
+        if OS is 'Osx':
+            mac_notify("Golestan", 'Golestan Grade Checker', 'You have new grades in golestan!', sound_on=True)
         else:
             # Play a beep sound (using sox)
-            s.call(['play', '--no-show-progress', '--null', '-t', 'alsa', '--channels', '1', 'synth', '1', 'sine', '330'])
+            s.call(['play',
+                    '--no-show-progress', '--null', '-t', 'alsa', '--channels', '1', 'synth', '1', 'sine', '330'])
 
             # Send a desktop notification (using notify-send)
             s.call(['notify-send', 'Golestan Grade Checker', 'You have new grades in golestan!'])
@@ -183,12 +197,12 @@ while True:
     previous_grades = given_grades
     print(f"Given Grades are {given_grades}")
     if TELEGRAM_NOTIF: 
-        updater.bot.send_message(chat_id = CHAT_ID,
-                                 text = str(f"Given Grades are {given_grades}"))
+        updater.bot.send_message(chat_id=CHAT_ID,
+                                 text=f"Given Grades are {given_grades}")
 
     print(f"Number of given Grades: {given_grades}")
 
-    # give professors some time to insert our grades -__-
+    # give professors some time to insert our grades -_-
     sleep(180)
 
     refresh_grades_page()
