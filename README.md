@@ -10,9 +10,9 @@ PASSWORD=<your password>
 ```
 
 # Requirements:
-Python3+
-Selenium (For Python)  `pip3 install selenium`
-Dotenv (For Python) `pip3 install python-dotenv`
-terminal-notifier (For OSx) `brew install terminal-notifier`
+* Python3+
+* Selenium (For Python)  `pip3 install selenium`
+* Dotenv (For Python) `pip3 install python-dotenv`
+* terminal-notifier (For OSx) `brew install terminal-notifier`
 
 Note: This project sends desktop notifications in Linux Operating System (using `notify-send`) and MacOs (using [`terminal-notifier`](https://github.com/julienXX/terminal-notifier)). It is not tested on Windows and other OSs.
