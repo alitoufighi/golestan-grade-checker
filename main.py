@@ -99,18 +99,18 @@ def go_to_semester(term_no):
 
 
 def find_given_grades():
-    result = 0
+    result = {}
     grades_table = driver.find_element_by_xpath(""".//table[@id="T02"]""")
     grades_table = grades_table.find_element_by_xpath(""".//tbody""")
     grades_rows = grades_table.find_elements_by_xpath(""".//tr[@class="TableDataRow"]""")
-
     print("Your given Grades are:")
     for row in grades_rows:
-        row_text = row.find_element_by_xpath(""".//td[9]""")
-        grade = row_text.find_element_by_xpath(""".//nobr[1]""").text
-        if grade != "":
-            print(grade)
-            result += 1
+        course_name = row.find_element_by_xpath(""".//td[6]""").get_attribute("title")
+        grade_element = row.find_element_by_xpath(""".//td[9]""")
+        course_grade = grade_element.find_element_by_xpath(""".//nobr[1]""").text
+        if course_grade != "":
+            print(course_name, course_grade)
+            result[course_name] = course_grade
     return result
 
 
@@ -142,12 +142,30 @@ driver.switch_to.default_content()
 switch_to_grades_frame(3)
 sleep(0.5)
 
-previous_grades = -1
+previous_grades = -1  # it will be changed to dictionary later
+
+
+def create_grades_message(grades):
+    """
+    Takes a list of tuples of grades in format (NAME, GRADE) and returns a beautified string
+    :param grades: a list of tuples of grades
+    :return: beautified string of grades with names and marks
+    """
+    result = ""
+    for grade in grades:
+        # result += name + ": " + grade
+        result += f"{', '.join(grade)}"
+
+
 while True:
     given_grades = find_given_grades()
     if previous_grades != -1 and previous_grades != given_grades:
+        diff = list(set(given_grades.items()) ^ set(previous_grades.items()))
+        new_grades_message = create_grades_message(diff)
         # Print on console
         print('You have new grades!')
+        print(diff)
+        print('---------')
 
         # Play a beep sound (using sox)
         s.call(['play', '--no-show-progress', '--null', '-t', 'alsa', '--channels', '1', 'synth', '1', 'sine', '330'])
