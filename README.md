@@ -8,7 +8,7 @@ You need to first create a `.env` file aside cloned files and enter username and
 USERNAME=<your username>
 PASSWORD=<your password>
 ```
-If you want Telegram notifications, you can add `TOKEN` and `CHAT_ID` pairs which are the token of your bot and the chat id (the numerical id) of your Telegram account, respectively. Also you must turn the `TELE_NOTIF` to `True`. (You may want to check [Telegram bots page](https://core.telegram.org/bots) if you're not familiar with them)
+If you want Telegram notifications, you can add `TOKEN` and `CHAT_ID` pairs which are the token of your bot and the chat id (the numerical id) of your Telegram account, respectively. Also you must set the `tele_notif` to `true` in `config.json` file. (You may want to check [Telegram bots page](https://core.telegram.org/bots) if you're not familiar with them)
 
 Then identify which term is the term you are looking for grades coming. You can do it by changing value of `TERM_NO`.
 
