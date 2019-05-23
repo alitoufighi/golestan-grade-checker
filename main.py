@@ -218,12 +218,7 @@ class GolestanGradeChecker:
         :param grades: a list of tuples of grades
         :return: beautified string of grades with names and marks
         """
-        result = ""
-        for index, (name, mark) in enumerate(grades):
-            result += f"{name}: {mark}"
-            if index < len(grades) - 1:
-                result += ", "
-        return result
+        return ", ".join([f"{name}: {mark}" for (name, mark) in grades.items()])
 
     # noinspection PyMethodMayBeStatic
     def _mac_notify(self, title, subtitle, message, sound_on):
