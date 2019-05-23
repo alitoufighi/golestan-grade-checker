@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.firefox.options import Options
 import json
 
 
@@ -23,12 +24,7 @@ class InvalidJsonConfigFileException(Exception):
 class GolestanGradeCheckerConfig:
     def __init__(self):
         self.os = 'OSx' if platform.system() == 'Darwin' else 'Linux'
-        try:
-            self.term, self.tg_notif, self.login_url = self._read_config()
-        except InvalidJsonConfigFileException:
-            print("-Exiting...")
-            sleep(1)
-            exit(1)
+        self.term, self.tg_notif, self.login_url = self._read_config()
         self.username, self.password, self.tg_token, self.tg_chat_id = self._read_env_config()
 
     # noinspection PyMethodMayBeStatic
@@ -69,11 +65,13 @@ class GolestanGradeChecker:
     # noinspection PyMethodMayBeStatic
     def _setup_driver(self):
         # setup Firefox profile (you can use other browsers, but I prefer Firefox)
+        options = Options()
+        options.add_argument('-headless')  # run in headless mode (without gui)
         fp = webdriver.FirefoxProfile()
         fp.set_preference("browser.tabs.remote.autostart", False)
         fp.set_preference("browser.tabs.remote.autostart.1", False)
         fp.set_preference("browser.tabs.remote.autostart.2", False)
-        driver = webdriver.Firefox(fp)
+        driver = webdriver.Firefox(fp, options=options)
         return driver
 
     def _start(self):
@@ -96,7 +94,7 @@ class GolestanGradeChecker:
         self.loop()
 
     def loop(self):
-        previous_grades = None
+        previous_grades = None  # it will be changed to dictionary later
         while True:
             given_grades = self._find_given_grades()
             if previous_grades is not None and previous_grades != given_grades:
