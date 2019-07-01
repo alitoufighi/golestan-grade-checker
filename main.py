@@ -13,7 +13,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.firefox.options import Options
 import json
-
+from kavenegar import * 
 
 class InvalidJsonConfigFileException(Exception):
     def __init__(self, msg):
@@ -24,8 +24,8 @@ class InvalidJsonConfigFileException(Exception):
 class GolestanGradeCheckerConfig:
     def __init__(self):
         self.os = 'OSx' if platform.system() == 'Darwin' else 'Linux'
-        self.term, self.tg_notif, self.login_url = self._read_config()
-        self.username, self.password, self.tg_token, self.tg_chat_id = self._read_env_config()
+        self.term, self.tg_notif, self.login_url, self.sms_notif = self._read_config()
+        self.username, self.password, self.tg_token, self.tg_chat_id, self.sms_api_key, self.phone_number = self._read_env_config()
 
     # noinspection PyMethodMayBeStatic
     def _read_env_config(self):
@@ -38,7 +38,9 @@ class GolestanGradeCheckerConfig:
         password = os.getenv("PASSWORD")
         tg_token = os.getenv("TOKEN")
         tg_chat_id = os.getenv("CHAT_ID")
-        return username, password, tg_token, tg_chat_id
+        sms_api_key = os.getenv("API_KEY")
+        phone_number = os.getenv("PHONE") 
+        return username, password, tg_token, tg_chat_id, sms_api_key, phone_number
 
     # noinspection PyMethodMayBeStatic
     def _read_config(self):
@@ -51,8 +53,10 @@ class GolestanGradeCheckerConfig:
             raise InvalidJsonConfigFileException('tele_notif')
         if 'golestan_login_url' not in data:
             raise InvalidJsonConfigFileException('golestan_login_url')
+        if 'sms_notif' not in data:
+            raise InvalidJsonConfigFileException('sms_notif')
 
-        return data['term_no'], data['tele_notif'], data['golestan_login_url']
+        return data['term_no'], data['tele_notif'], data['golestan_login_url'], data['sms_notif']
 
 
 class GolestanGradeChecker:
@@ -107,6 +111,7 @@ class GolestanGradeChecker:
                 print('---------')
 
                 self._send_notification(new_grades_message)
+                self._send_sms(new_grades_message)
 
             previous_grades = given_grades
 
@@ -251,6 +256,16 @@ class GolestanGradeChecker:
                                           text=f"You have new grades in golestan!\nGiven Grades are"
                                           f" {new_grades_message}")
 
+    def _send_sms(self, new_grades_message):
+        if self.config.sms_notif:
+            api = KavenegarAPI(self.config.sms_api_key) 
+            params = { 'sender' : '1000596446', 'receptor': self.config.phone_number, 'message' :new_grades_message }
+            response = api.sms_send( params)
+
+
+
+        
+        
 
 if __name__ == '__main__':
     ggc = GolestanGradeChecker()
