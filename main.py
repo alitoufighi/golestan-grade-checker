@@ -185,15 +185,12 @@ class GolestanGradeChecker:
         grades_table = self.driver.find_element_by_xpath(""".//table[@id="T02"]""")
         grades_table = grades_table.find_element_by_xpath(""".//tbody""")
         grades_rows = grades_table.find_elements_by_xpath(""".//tr[@class="TableDataRow"]""")
-        if grades_rows:
-            print("Currently given Grades are:")
-        else:
-            print("There is no grade given!")
+        print("Currently given Grades are:")
         for row in grades_rows:
             course_name = row.find_element_by_xpath(""".//td[6]""").get_attribute("title")
             grade_element = row.find_element_by_xpath(""".//td[9]""")
             course_grade = grade_element.find_element_by_xpath(""".//nobr[1]""").text
-            if course_grade:
+            if course_grade != "":
                 print(course_name, course_grade)
                 result[course_name] = course_grade
         return result
