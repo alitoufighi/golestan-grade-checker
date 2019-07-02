@@ -38,7 +38,7 @@ class GolestanGradeCheckerConfig:
         password = os.getenv("PASSWORD")
         tg_token = os.getenv("TOKEN")
         tg_chat_id = os.getenv("CHAT_ID")
-        sms_api_key = os.getenv("API_KEY")
+        sms_api_key = os.getenv("SMS_KEY")
         phone_number = os.getenv("PHONE") 
         return username, password, tg_token, tg_chat_id, sms_api_key, phone_number
 
