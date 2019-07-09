@@ -25,7 +25,7 @@ class InvalidJsonConfigFileException(Exception):
 class GolestanGradeCheckerConfig:
     def __init__(self):
         try:
-            self.term, self.tg_notif, self.login_url = self._read_config()
+            self.term, self.tg_notif, self.login_url, self.refresh_rate = self._read_config()
         except InvalidJsonConfigFileException:
             exit(2)
         else:
@@ -53,8 +53,10 @@ class GolestanGradeCheckerConfig:
             raise InvalidJsonConfigFileException('tele_notif')
         if 'golestan_login_url' not in data:
             raise InvalidJsonConfigFileException('golestan_login_url')
+        if 'refresh_rate' not in data:
+            raise InvalidJsonConfigFileException('refresh_rate')
 
-        return data['term_no'], data['tele_notif'], data['golestan_login_url']
+        return data['term_no'], data['tele_notif'], data['golestan_login_url'], data['refresh_rate']
 
 
 class GolestanGradeChecker:
@@ -116,7 +118,7 @@ class GolestanGradeChecker:
             previous_grades = given_grades
 
             # give professors some time to insert our grades -_-
-            sleep(180)
+            sleep(self.config.refresh_rate * 60)
 
             self._refresh_grades_page()
 
