@@ -1,0 +1,5 @@
+jdatetime==3.2.0
+python-dotenv==0.10.1
+python-telegram-bot==11.1.0
+selenium==3.141.0
+telegram==0.0.1
