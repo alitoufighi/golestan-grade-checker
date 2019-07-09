@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import os
-import json
 import platform
 import jdatetime
 import subprocess as s
@@ -31,7 +30,8 @@ class GolestanGradeCheckerConfig:
             exit(2)
         else:
             self.os = 'OSx' if platform.system() == 'Darwin' else 'Linux'
-            self.username, self.password, self.tg_token, self.tg_chat_id, self.sms_api_key, self.phone_number = self._read_env_config()
+            self.username, self.password, self.tg_token, self.tg_chat_id, self.sms_api_key, self.phone_number = \
+                self._read_env_config()
 
     def _read_env_config(self):
         load_dotenv(verbose=False)
@@ -283,13 +283,9 @@ class GolestanGradeChecker:
     def _send_sms(self, new_grades_message):
         if self.config.sms_notif:
             api = KavenegarAPI(self.config.sms_api_key) 
-            params = { 'sender' : '1000596446', 'receptor': self.config.phone_number, 'message' :new_grades_message }
-            response = api.sms_send( params)
+            params = {'sender': '1000596446', 'receptor': self.config.phone_number, 'message': new_grades_message}
+            api.sms_send(params)
 
-
-
-        
-        
 
 if __name__ == '__main__':
     ggc = GolestanGradeChecker()
