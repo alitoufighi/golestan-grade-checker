@@ -3,6 +3,7 @@
 import os
 import json
 import platform
+import jdatetime
 import subprocess as s
 from time import sleep
 from pathlib import Path
@@ -105,6 +106,7 @@ class GolestanGradeChecker:
         previous_grades = None
         while True:
             given_grades = self._find_given_grades()
+            self._print_grades(given_grades)
             if previous_grades is not None and previous_grades != given_grades:
                 diff = dict(set(given_grades.items()) - set(previous_grades.items()))
                 new_grades_message = self._create_grades_notif_message(diff)
@@ -179,6 +181,18 @@ class GolestanGradeChecker:
             f"""//tr[@class="TableDataRow"][{self.config.term}]/td[1]""")
         term_field.click()
 
+    def _add_time_prefix(self, string):
+        now = jdatetime.datetime.now()
+        return f"[{now.month}/{now.day} {now.hour}:{now.minute}:{now.second}] {string}"
+
+    def _print_grades(self, given_grades):
+        if not given_grades:
+            print(self._add_time_prefix("There is no grade given!"))
+            return
+        print(self._add_time_prefix("Currently given Grades are:"))
+        for course_name, course_grade in given_grades.items():
+            print(course_name, course_grade)
+
     def _find_given_grades(self):
         """
         When driver is in the page of a semester, this function finds courses with grades given
@@ -234,8 +248,10 @@ class GolestanGradeChecker:
         print('---------')
 
         if self.config.os == 'Osx':
-            self._mac_notify("Golestan", 'Golestan Grade Checker',
-                             f'You have new grades in golestan! {new_grades_message}', sound_on=True)
+            self._mac_notify("Golestan",
+                             'Golestan Grade Checker',
+                             f'{self._add_time_prefix("You have new grades in golestan!")}\n{new_grades_message}',
+                             sound_on=True)
         else:
             # Play a beep sound (using sox)
             s.call(['play',
@@ -247,8 +263,9 @@ class GolestanGradeChecker:
                     'sine', '330'])
 
             # Send a desktop notification (using notify-send)
-            s.call(['notify-send', 'Golestan Grade Checker',
-                    f'You have new grades in golestan! {new_grades_message}'])
+            s.call(['notify-send',
+                    'Golestan Grade Checker',
+                    f'{self._add_time_prefix("You have new grades in golestan!")}\n{new_grades_message}'])
 
         if self.config.tg_notif:
             self.updater.bot.send_message(chat_id=self.config.tg_chat_id,
