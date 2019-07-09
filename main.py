@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import json
 import platform
 import subprocess as s
 from time import sleep
@@ -9,10 +10,9 @@ from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.firefox.options import Options
-import json
 
 
 class InvalidJsonConfigFileException(Exception):
@@ -23,13 +23,15 @@ class InvalidJsonConfigFileException(Exception):
 
 class GolestanGradeCheckerConfig:
     def __init__(self):
-        self.os = 'OSx' if platform.system() == 'Darwin' else 'Linux'
-        self.term, self.tg_notif, self.login_url = self._read_config()
-        self.username, self.password, self.tg_token, self.tg_chat_id = self._read_env_config()
+        try:
+            self.term, self.tg_notif, self.login_url = self._read_config()
+        except InvalidJsonConfigFileException:
+            exit(2)
+        else:
+            self.os = 'OSx' if platform.system() == 'Darwin' else 'Linux'
+            self.username, self.password, self.tg_token, self.tg_chat_id = self._read_env_config()
 
-    # noinspection PyMethodMayBeStatic
     def _read_env_config(self):
-        # dotenv is used to handle username and password security.
         load_dotenv(verbose=False)
         env_path = Path('./env') / '.env'
         load_dotenv(dotenv_path=str(env_path))
@@ -40,7 +42,6 @@ class GolestanGradeCheckerConfig:
         tg_chat_id = os.getenv("CHAT_ID")
         return username, password, tg_token, tg_chat_id
 
-    # noinspection PyMethodMayBeStatic
     def _read_config(self):
         with open('config.json') as f:
             data = json.load(f)
@@ -60,9 +61,8 @@ class GolestanGradeChecker:
         self.config = GolestanGradeCheckerConfig()
         self.driver = self._setup_driver()
         self.updater = Updater(self.config.tg_token) if self.config.tg_notif else None
-        self._start()
+        self._send_start_notification()
 
-    # noinspection PyMethodMayBeStatic
     def _setup_driver(self):
         # setup Firefox profile (you can use other browsers, but I prefer Firefox)
         options = Options()
@@ -74,13 +74,17 @@ class GolestanGradeChecker:
         driver = webdriver.Firefox(fp, options=options)
         return driver
 
-    def _start(self):
+    def _send_start_notification(self):
         if self.config.os is 'OSx':
             self._mac_notify("Golestan", 'By Ali_Tou', 'Golestan Grade Checker is running', sound_on=False)
         else:
             s.call(['notify-send', 'Golestan Grade Checker is running', 'By Ali_Tou'])
 
     def run(self):
+        """
+        Logins to Golestan, goes to desired semester page and loops over it to get new grades
+        :return:
+        """
         self._login_to_golestan()
         sleep(20)
         self._go_to_etelaate_jame_daneshjoo_page()
@@ -94,17 +98,16 @@ class GolestanGradeChecker:
         self.loop()
 
     def loop(self):
-        previous_grades = None  # it will be changed to dictionary later
+        """
+        An infinite loop which keeps refreshing golestan grades page in given semester
+        :return: None
+        """
+        previous_grades = None
         while True:
             given_grades = self._find_given_grades()
             if previous_grades is not None and previous_grades != given_grades:
-                diff = list(set(given_grades.items()) ^ set(previous_grades.items()))
-                new_grades_message = self._create_grades_message(diff)
-
-                # Print on console
-                print('You have new grades!')
-                print(new_grades_message)
-                print('---------')
+                diff = dict(set(given_grades.items()) - set(previous_grades.items()))
+                new_grades_message = self._create_grades_notif_message(diff)
 
                 self._send_notification(new_grades_message)
 
@@ -178,20 +181,18 @@ class GolestanGradeChecker:
 
     def _find_given_grades(self):
         """
-        When driver is in the page of a semester, this function finds number of courses which has grades
-        :return: number of courses with given grades
+        When driver is in the page of a semester, this function finds courses with grades given
+        :return: courses with given grades
         """
         result = {}
         grades_table = self.driver.find_element_by_xpath(""".//table[@id="T02"]""")
         grades_table = grades_table.find_element_by_xpath(""".//tbody""")
         grades_rows = grades_table.find_elements_by_xpath(""".//tr[@class="TableDataRow"]""")
-        print("Currently given Grades are:")
         for row in grades_rows:
             course_name = row.find_element_by_xpath(""".//td[6]""").get_attribute("title")
             grade_element = row.find_element_by_xpath(""".//td[9]""")
             course_grade = grade_element.find_element_by_xpath(""".//nobr[1]""").text
-            if course_grade != "":
-                print(course_name, course_grade)
+            if course_grade:
                 result[course_name] = course_grade
         return result
 
@@ -211,8 +212,7 @@ class GolestanGradeChecker:
         next_term.click()
         sleep(5)
 
-    # noinspection PyMethodMayBeStatic
-    def _create_grades_message(self, grades):
+    def _create_grades_notif_message(self, grades):
         """
         Takes a list of tuples of grades in format (NAME, GRADE) and returns a beautified string
         :param grades: a list of tuples of grades
@@ -220,7 +220,6 @@ class GolestanGradeChecker:
         """
         return ", ".join([f"{name}: {mark}" for (name, mark) in grades])
 
-    # noinspection PyMethodMayBeStatic
     def _mac_notify(self, title, subtitle, message, sound_on):
         title = '-title {!r}'.format(title)
         sub = '-subtitle {!r}'.format(subtitle)
@@ -229,6 +228,11 @@ class GolestanGradeChecker:
         os.system('terminal-notifier {}'.format(' '.join([msg, title, sub, sound])))
 
     def _send_notification(self, new_grades_message):
+
+        print('You have new grades!')
+        print(new_grades_message)
+        print('---------')
+
         if self.config.os == 'Osx':
             self._mac_notify("Golestan", 'Golestan Grade Checker',
                              f'You have new grades in golestan! {new_grades_message}', sound_on=True)
